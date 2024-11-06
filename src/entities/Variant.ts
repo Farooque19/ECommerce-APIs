@@ -1,26 +1,16 @@
-import {Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn} from "typeorm";
-import {Product} from "./Product";
+import { Entity, Column, ManyToOne } from "typeorm";
+import { Product } from "./Product";
+import { BaseEntity } from "./baseEntity"
 
 @Entity("Variant")
-export class Variant {
-    @PrimaryGeneratedColumn()
-    id: number;
-
-    @Column("varchar")
-    name: string;
+export class Variant extends BaseEntity  {
 
     @Column("decimal")
     price: number;
-
-    @CreateDateColumn()
-    createdAt: Date;
-
-    @UpdateDateColumn()
-    updatedAt: Date;
 
     @Column({default: 0})
     inventory: number;
 
     @ManyToOne(() => Product, (product) => product.variant)
-    product: Product | null;
+    product: Product;
 }
