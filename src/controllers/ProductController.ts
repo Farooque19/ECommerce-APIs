@@ -3,6 +3,7 @@ import { DBConnection } from "../db/dbConnection";
 import { IRouterContext } from "koa-router";
 import { Product } from "../entities/Product";
 import { Options } from "../config/type";
+import * as statusCodes from "../utils/statusCode"
 
 const dbConnect = new DBConnection();
 
@@ -21,8 +22,8 @@ export class ProductController {
 
         // Validation: Ensure description is provided
         if (!description || description.trim() === "") {
-            ctx.status = 400;
-            ctx.body = { message: "Description is required and cannot be empty" };
+            ctx.status = statusCodes.BAD_REQUEST_STATUS
+            ctx.body = { message: statusCodes.BAD_REQUEST_MESSAGE };
             return;
         }
 
@@ -38,18 +39,17 @@ export class ProductController {
 
         try {
             await this.productDataRepo.save(prod);
-            ctx.status = 201;
-            ctx.body = { message: "Product created successfully", product: prod };
+            ctx.status = statusCodes.OK_STATUS;
+            ctx.body = { message: statusCodes.OK_STATUS_MESSAGE, product: prod };
         } catch (error) {
-            ctx.status = 500;
-            ctx.body = { message: "Error creating product", error};
+            ctx.status = statusCodes.INTERNAL_SERVER_ERROR_STATUS
+            ctx.body = { message: statusCodes.INTERNAL_SERVER_ERROR_MESSAGE, error};
         }
     }
 
     // Get All Products for a Client
     public async getProductForClient(ctx: IRouterContext) {
         const clientId = ctx.params.id;
-        //console.log(clientId);
         try {
             const products = await this.productDataRepo.findOneOrFail({
                 where: {
@@ -59,18 +59,17 @@ export class ProductController {
                     },
                 relations: { variant: true },  // Include variants if needed
             });
-            //console.log(products);
             if (!products) {
-                ctx.status = 404;
-                ctx.body = { message: "Products not found." };
+                ctx.status = statusCodes.NOT_FOUND_STATUS;
+                ctx.body = { message: statusCodes.NOT_FOUND_MESSAGE };
                 return;
             }
 
-            ctx.status = 200;
+            ctx.status = statusCodes.OK_STATUS;
             ctx.body = products;
         } catch (error) {
-            ctx.status = 500;
-            ctx.body = { message: "Error fetching products", error };
+            ctx.status = statusCodes.INTERNAL_SERVER_ERROR_STATUS;
+            ctx.body = { message: statusCodes.INTERNAL_SERVER_ERROR_MESSAGE, error };
         }
     }
 
@@ -85,16 +84,16 @@ export class ProductController {
             });
 
             if (!product) {
-                ctx.status = 404;
-                ctx.body = { message: "Product not found" };
+                ctx.status = statusCodes.NOT_FOUND_STATUS;
+                ctx.body = { message: statusCodes.NOT_FOUND_MESSAGE };
                 return;
             }
 
-            ctx.status = 200;
+            ctx.status = statusCodes.OK_STATUS;
             ctx.body = product;
         } catch (error) {
-            ctx.status = 500;
-            ctx.body = { message: "Error fetching product", error };
+            ctx.status = statusCodes.INTERNAL_SERVER_ERROR_STATUS;
+            ctx.body = { message: statusCodes.INTERNAL_SERVER_ERROR_MESSAGE, error };
         }
     }
 
@@ -105,8 +104,8 @@ export class ProductController {
 
         // Validate that description is not empty
         if (!description || description.trim() === "") {
-            ctx.status = 400;
-            ctx.body = { message: "Description is required and cannot be empty" };
+            ctx.status = statusCodes.BAD_REQUEST_STATUS;
+            ctx.body = { message: statusCodes.BAD_REQUEST_MESSAGE };
             return;
         }
 
@@ -114,8 +113,8 @@ export class ProductController {
             const product = await this.productDataRepo.findOneBy({ id });
 
             if (!product) {
-                ctx.status = 404;
-                ctx.body = { message: "Product not found" };
+                ctx.status = statusCodes.NOT_FOUND_STATUS;
+                ctx.body = { message: statusCodes.NOT_FOUND_MESSAGE };
                 return;
             }
 
@@ -125,11 +124,11 @@ export class ProductController {
 
             await this.productDataRepo.save(product);
 
-            ctx.status = 200;
-            ctx.body = { message: "Product updated successfully", product };
+            ctx.status = statusCodes.OK_STATUS;
+            ctx.body = { message: statusCodes.OK_STATUS_MESSAGE, product };
         } catch (error) {
-            ctx.status = 500;
-            ctx.body = { message: "Error updating product", error};
+            ctx.status = statusCodes.INTERNAL_SERVER_ERROR_STATUS;
+            ctx.body = { message: statusCodes.INTERNAL_SERVER_ERROR_MESSAGE, error};
         }
     }
 
@@ -141,16 +140,16 @@ export class ProductController {
             const result = await this.productDataRepo.delete(id);
 
             if (result.affected === 0) {
-                ctx.status = 404;
-                ctx.body = { message: "Product not found" };
+                ctx.status = statusCodes.NOT_FOUND_STATUS;
+                ctx.body = { message: statusCodes.NOT_FOUND_MESSAGE };
                 return;
             }
 
-            ctx.status = 200;
-            ctx.body = { message: "Product deleted successfully" };
+            ctx.status = statusCodes.OK_STATUS;
+            ctx.body = { message: statusCodes.OK_STATUS_MESSAGE };
         } catch (error) {
-            ctx.status = 500;
-            ctx.body = { message: "Error deleting product", error};
+            ctx.status = statusCodes.INTERNAL_SERVER_ERROR_STATUS;
+            ctx.body = { message: statusCodes.INTERNAL_SERVER_ERROR_MESSAGE, error};
         }
     }
 }

@@ -1,8 +1,6 @@
 import {Client} from "../entities/Client";
-import {DBConnection} from "../db/dbConnection";
 import {IRouterContext} from "koa-router";
-
-// const clientDataRepo = dbConnect.postgresDataSource.getRepository(Client);
+import * as statusCodes from "../utils/statusCode"
 
 export class ClientController {
     protected clientDataRepo: any;
@@ -16,15 +14,14 @@ export class ClientController {
     //Create new client
     public async createClient(ctx: any) {
 
-        // this.clientDataRepo = (await dbConnect.connect()).getRepository(Client);
         const {name, email} = ctx.request.body as { name: string; email: string };
         const client = new Client();
         client.name = name;
         client.email = email;
-        // const
         console.log(this.clientDataRepo);
         console.log(await this.clientDataRepo.save(client));
-        ctx.body = "Record Inserted."
+        ctx.body = statusCodes.CREATED_STATUS
+        ctx.body = statusCodes.CREATED_STATUS_MESSAGE
     }
 
 
@@ -35,7 +32,11 @@ export class ClientController {
                 products: true
             }
         });
-        await this.clientDataRepo.save(clients);
+        if(!clients){
+            ctx.status = statusCodes.NOT_FOUND_STATUS;
+            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
+        }
+        ctx.status = statusCodes.OK_STATUS;
         ctx.body = clients;
     }
 
@@ -52,12 +53,12 @@ export class ClientController {
             }
         });
         if (!clients) {
-            ctx.status = 404;
-            ctx.body = "Not Found";
+            ctx.status = statusCodes.NOT_FOUND_STATUS;
+            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
             return;
         }
         ctx.body = clients;
-        ctx.status = 200;
+        ctx.status = statusCodes.OK_STATUS;
     }
 
 
@@ -71,16 +72,16 @@ export class ClientController {
             }
         })
         if (!client) {
-            ctx.status = 404;
-            ctx.body = "Not Found";
+            ctx.status = statusCodes.NOT_FOUND_STATUS;
+            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
             return;
         }
         await this.clientDataRepo.update(id, {
             name: name,
             email: email
         })
-        ctx.status = 200;
-        ctx.body = "Record Updated.";
+        ctx.status = statusCodes.OK_STATUS;
+        ctx.body = statusCodes.OK_STATUS_MESSAGE;
     }
 
 
@@ -89,10 +90,10 @@ export class ClientController {
         const id = +ctx.params.id;
         const deletedData = await this.clientDataRepo.delete({id});
         if (deletedData.affected === 0) {
-            ctx.status = 404;
-            ctx.body = "Client not found.";
+            ctx.status = statusCodes.NOT_FOUND_STATUS;
+            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
         }
-        ctx.status = 200;
-        ctx.body = "Client Data Deleted";
+        ctx.status = statusCodes.OK_STATUS;
+        ctx.body = statusCodes.OK_STATUS_MESSAGE;
     }
 }

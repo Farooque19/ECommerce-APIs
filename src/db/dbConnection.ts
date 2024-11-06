@@ -34,9 +34,4 @@ export class DBConnection {
             throw new Error("Database Connection failed");
         }
     }
-
-    getDataSource() {
-        return this.postgresDataSource;
-    }
-
 }

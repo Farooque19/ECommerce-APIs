@@ -1,13 +1,11 @@
 import Router from "koa-router";
 import { VariantController } from "../controllers/variantController";
-import {DBConnection} from "../db/dbConnection";
 
 const variantRouter = new Router();
-const dbConnect = new DBConnection();
-dbConnect.connect();
-const variantController = new VariantController(dbConnect.getDataSource());
 
-export function VariantRouter(){
+export function VariantRouter(connection: any){
+    const variantController = new VariantController(connection);
+
     variantRouter.post("/api/products/:productId/variants", (ctx) => variantController.createVariantForProduct(ctx));
 
     variantRouter.get("/api/products/:productId/variants", (ctx)=> variantController.getVariantsForProduct(ctx));

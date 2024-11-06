@@ -3,6 +3,7 @@ import { DBConnection } from "../db/dbConnection";
 import { IRouterContext } from "koa-router";
 import { Product } from "../entities/Product";
 import { Options, PriceMapping } from "../config/type";
+import * as statusCodes from "../utils/statusCode"
 
 
 function generateVariants(options: Options, priceMapping: PriceMapping, product: Product): Variant[] {
@@ -42,36 +43,33 @@ export class VariantController {
     public async createVariantForProduct(ctx: IRouterContext) {
         const productDataRepo = (await dbConnect.connect()).getRepository(Product);
         const productId = ctx.params.productId;
-        console.log(productId);
         const { priceMapping } = ctx.request.body as { priceMapping: PriceMapping };
-        console.log(priceMapping);
 
         const product = await productDataRepo.findOneOrFail({
             where: {
                 id: +productId
             }
         });
-        console.log(product);
+
         if (!product) {
-            ctx.status = 404;
-            ctx.body = "Product not found.";
+            ctx.status = statusCodes.NOT_FOUND_STATUS;
+            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
             return;
         }
 
         const { options } = product;
-        console.log(options);
+
         if (!options || !options.color || !options.size) {
-            ctx.status = 400;
-            ctx.body = "Product does not have options (e.g., color or size) to create variants.";
+            ctx.status = statusCodes.BAD_REQUEST_STATUS;
+            ctx.body = statusCodes.BAD_REQUEST_MESSAGE;
             return;
         }
 
         const variants = generateVariants(options, priceMapping, product);
         console.log(variants);
-        const result = await this.variantDataRepo.save(variants);
-        console.log(result);
-        ctx.status = 200;
-        ctx.body = "Variants created successfully.";
+        await this.variantDataRepo.save(variants);
+        ctx.status = statusCodes.OK_STATUS;
+        ctx.body = statusCodes.OK_STATUS_MESSAGE;
     }
 
 
@@ -86,12 +84,12 @@ export class VariantController {
             }
         });
         if (!variant) {
-            ctx.status = 404;
-            ctx.body = "Not Found";
+            ctx.status = statusCodes.NOT_FOUND_STATUS;
+            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
             return;
         }
         ctx.body = variant;
-        ctx.status = 200;
+        ctx.status = statusCodes.OK_STATUS;
     }
 
 
@@ -104,12 +102,12 @@ export class VariantController {
             }
         });
         if (!variant) {
-            ctx.status = 404;
-            ctx.body = "Not Found";
+            ctx.status = statusCodes.NOT_FOUND_STATUS;
+            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
             return;
         }
         ctx.body = variant;
-        ctx.status = 200;
+        ctx.status = statusCodes.OK_STATUS;
     }
 
 
@@ -117,13 +115,23 @@ export class VariantController {
     public async updateVariantById(ctx: IRouterContext) {
         const id = +ctx.params.id;
         const {name, price, inventory} = ctx.request.body as { name: string; price: number; inventory: number; };
+        const variant = await this.variantDataRepo.findOne({
+            where: {
+                id: id
+            }
+        });
+        if(!variant){
+            ctx.status = statusCodes.NOT_FOUND_STATUS;
+            ctx.body = statusCodes.NOT_FOUND_MESSAGE
+            return
+        }
         await this.variantDataRepo.update(id, {
             name: name,
             price: price,
             inventory: inventory
         });
-        ctx.status = 200;
-        ctx.body = "Variant record updated.";
+        ctx.status = statusCodes.OK_STATUS;
+        ctx.body = statusCodes.OK_STATUS_MESSAGE;
     }
 
 
@@ -132,12 +140,12 @@ export class VariantController {
         const id = ctx.params.id;
         const result = await this.variantDataRepo.delete(id);
         if(result.affected === 0){
-            ctx.status = 404;
-            ctx.body = "Variant not found.";
+            ctx.status = statusCodes.NOT_FOUND_STATUS;
+            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
             return;
         }
-        ctx.status = 200;
-        ctx.body = "Variant record deleted.";
+        ctx.status = statusCodes.OK_STATUS;
+        ctx.body = statusCodes.OK_STATUS_MESSAGE;
     }
 
 }

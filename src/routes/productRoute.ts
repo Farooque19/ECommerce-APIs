@@ -1,13 +1,11 @@
 import Router from "koa-router";
 import { ProductController } from "../controllers/ProductController";
-import {DBConnection} from "../db/dbConnection";
 
 const productRouter = new Router();
-const dbConnect = new DBConnection()
-dbConnect.connect();
-const productController = new ProductController(dbConnect.getDataSource());
 
-export function ProductRouter() {
+export function ProductRouter(connection: any) {
+    const productController = new ProductController(connection);
+
     productRouter.post("/api/clients/:id/products", (ctx) => productController.createProductForClient(ctx));
 
     productRouter.get("/api/clients/:id/products", (ctx)=> productController.getProductForClient(ctx));

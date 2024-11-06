@@ -8,13 +8,13 @@ import { VariantRouter } from "./routes/variantRoute";
 
 (async () => {
     const dbConnect = new DBConnection();
-    await dbConnect.connect();
+    const connection= await dbConnect.connect();
     const app = new Koa();
 
     const PORT = process.env.PORT || 3000;
-    const clientRoutes = ClientRouter();
-    const productRoutes = ProductRouter();
-    const variantRoutes = VariantRouter();
+    const clientRoutes = ClientRouter(connection);
+    const productRoutes = ProductRouter(connection);
+    const variantRoutes = VariantRouter(connection);
 
     app.use(bodyParser());
 
