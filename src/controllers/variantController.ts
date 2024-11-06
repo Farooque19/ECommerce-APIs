@@ -3,7 +3,13 @@ import { DBConnection } from "../db/dbConnection";
 import { IRouterContext } from "koa-router";
 import { Product } from "../entities/Product";
 import { Options, PriceMapping } from "../config/type";
-import * as statusCodes from "../utils/statusCode"
+import {BaseController} from "./baseController";
+import {
+    BAD_REQUEST_MESSAGE,
+    BAD_REQUEST_STATUS, CREATED_STATUS, CREATED_STATUS_MESSAGE,
+    NOT_FOUND_MESSAGE, NOT_FOUND_STATUS, OK_STATUS, OK_STATUS_MESSAGE
+} from "../utils/statusCode";
+
 
 
 function generateVariants(options: Options, priceMapping: PriceMapping, product: Product): Variant[] {
@@ -31,10 +37,11 @@ function generateVariants(options: Options, priceMapping: PriceMapping, product:
 const dbConnect = new DBConnection();
 
 
-export class VariantController {
+export class VariantController extends BaseController{
     protected variantDataRepo : any;
 
     constructor(connection: any) {
+        super();
         this.variantDataRepo = connection.getRepository(Variant);
     }
 
@@ -52,24 +59,20 @@ export class VariantController {
         });
 
         if (!product) {
-            ctx.status = statusCodes.NOT_FOUND_STATUS;
-            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
+            this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
             return;
         }
 
         const { options } = product;
 
         if (!options || !options.color || !options.size) {
-            ctx.status = statusCodes.BAD_REQUEST_STATUS;
-            ctx.body = statusCodes.BAD_REQUEST_MESSAGE;
+            this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
             return;
         }
 
         const variants = generateVariants(options, priceMapping, product);
-        console.log(variants);
         await this.variantDataRepo.save(variants);
-        ctx.status = statusCodes.OK_STATUS;
-        ctx.body = statusCodes.OK_STATUS_MESSAGE;
+        this.okStatus(ctx, CREATED_STATUS, CREATED_STATUS_MESSAGE);
     }
 
 
@@ -84,12 +87,11 @@ export class VariantController {
             }
         });
         if (!variant) {
-            ctx.status = statusCodes.NOT_FOUND_STATUS;
-            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
+            this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
             return;
         }
         ctx.body = variant;
-        ctx.status = statusCodes.OK_STATUS;
+        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
     }
 
 
@@ -101,13 +103,12 @@ export class VariantController {
                 id: +id
             }
         });
-        if (!variant) {
-            ctx.status = statusCodes.NOT_FOUND_STATUS;
-            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
+        if (!variant || variant.length === 0) {
+            this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE)
             return;
         }
         ctx.body = variant;
-        ctx.status = statusCodes.OK_STATUS;
+        this,this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
     }
 
 
@@ -121,8 +122,7 @@ export class VariantController {
             }
         });
         if(!variant){
-            ctx.status = statusCodes.NOT_FOUND_STATUS;
-            ctx.body = statusCodes.NOT_FOUND_MESSAGE
+            this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
             return
         }
         await this.variantDataRepo.update(id, {
@@ -130,8 +130,7 @@ export class VariantController {
             price: price,
             inventory: inventory
         });
-        ctx.status = statusCodes.OK_STATUS;
-        ctx.body = statusCodes.OK_STATUS_MESSAGE;
+        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
     }
 
 
@@ -140,12 +139,10 @@ export class VariantController {
         const id = ctx.params.id;
         const result = await this.variantDataRepo.delete(id);
         if(result.affected === 0){
-            ctx.status = statusCodes.NOT_FOUND_STATUS;
-            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
+            this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
             return;
         }
-        ctx.status = statusCodes.OK_STATUS;
-        ctx.body = statusCodes.OK_STATUS_MESSAGE;
+        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
     }
 
 }

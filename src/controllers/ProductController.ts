@@ -3,13 +3,20 @@ import { DBConnection } from "../db/dbConnection";
 import { IRouterContext } from "koa-router";
 import { Product } from "../entities/Product";
 import { Options } from "../config/type";
-import * as statusCodes from "../utils/statusCode"
+import {
+    BAD_REQUEST_MESSAGE,
+    BAD_REQUEST_STATUS,
+    INTERNAL_SERVER_ERROR_MESSAGE,
+    INTERNAL_SERVER_ERROR_STATUS, NOT_FOUND_MESSAGE, NOT_FOUND_STATUS, OK_STATUS, OK_STATUS_MESSAGE
+} from "../utils/statusCode";
+import {BaseController} from "./baseController";
 
 const dbConnect = new DBConnection();
 
-export class ProductController {
+export class ProductController extends BaseController{
     protected productDataRepo : any;
     constructor(connection: any) {
+        super();
         this.productDataRepo = connection.getRepository(Product);
     }
 
@@ -22,8 +29,7 @@ export class ProductController {
 
         // Validation: Ensure description is provided
         if (!description || description.trim() === "") {
-            ctx.status = statusCodes.BAD_REQUEST_STATUS
-            ctx.body = { message: statusCodes.BAD_REQUEST_MESSAGE };
+            this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
             return;
         }
 
@@ -39,11 +45,9 @@ export class ProductController {
 
         try {
             await this.productDataRepo.save(prod);
-            ctx.status = statusCodes.OK_STATUS;
-            ctx.body = { message: statusCodes.OK_STATUS_MESSAGE, product: prod };
+            this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
         } catch (error) {
-            ctx.status = statusCodes.INTERNAL_SERVER_ERROR_STATUS
-            ctx.body = { message: statusCodes.INTERNAL_SERVER_ERROR_MESSAGE, error};
+            this.badRequest(ctx, INTERNAL_SERVER_ERROR_STATUS, INTERNAL_SERVER_ERROR_MESSAGE)
         }
     }
 
@@ -60,16 +64,14 @@ export class ProductController {
                 relations: { variant: true },  // Include variants if needed
             });
             if (!products) {
-                ctx.status = statusCodes.NOT_FOUND_STATUS;
-                ctx.body = { message: statusCodes.NOT_FOUND_MESSAGE };
+                this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE);
                 return;
             }
 
-            ctx.status = statusCodes.OK_STATUS;
+            this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
             ctx.body = products;
         } catch (error) {
-            ctx.status = statusCodes.INTERNAL_SERVER_ERROR_STATUS;
-            ctx.body = { message: statusCodes.INTERNAL_SERVER_ERROR_MESSAGE, error };
+            this.badRequest(ctx, INTERNAL_SERVER_ERROR_STATUS, INTERNAL_SERVER_ERROR_MESSAGE);
         }
     }
 
@@ -83,17 +85,15 @@ export class ProductController {
                 relations: { variant: true },
             });
 
-            if (!product) {
-                ctx.status = statusCodes.NOT_FOUND_STATUS;
-                ctx.body = { message: statusCodes.NOT_FOUND_MESSAGE };
+            if (!product || product.length === 0) {
+                this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE);
                 return;
             }
 
-            ctx.status = statusCodes.OK_STATUS;
+            this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
             ctx.body = product;
         } catch (error) {
-            ctx.status = statusCodes.INTERNAL_SERVER_ERROR_STATUS;
-            ctx.body = { message: statusCodes.INTERNAL_SERVER_ERROR_MESSAGE, error };
+            this.badRequest(ctx, INTERNAL_SERVER_ERROR_STATUS, INTERNAL_SERVER_ERROR_MESSAGE);
         }
     }
 
@@ -102,19 +102,11 @@ export class ProductController {
         const id = +ctx.params.id;
         const { name, description } = ctx.request.body as { name: string; description: string };
 
-        // Validate that description is not empty
-        if (!description || description.trim() === "") {
-            ctx.status = statusCodes.BAD_REQUEST_STATUS;
-            ctx.body = { message: statusCodes.BAD_REQUEST_MESSAGE };
-            return;
-        }
-
         try {
             const product = await this.productDataRepo.findOneBy({ id });
 
             if (!product) {
-                ctx.status = statusCodes.NOT_FOUND_STATUS;
-                ctx.body = { message: statusCodes.NOT_FOUND_MESSAGE };
+                this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
                 return;
             }
 
@@ -124,11 +116,10 @@ export class ProductController {
 
             await this.productDataRepo.save(product);
 
-            ctx.status = statusCodes.OK_STATUS;
-            ctx.body = { message: statusCodes.OK_STATUS_MESSAGE, product };
+            this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
+
         } catch (error) {
-            ctx.status = statusCodes.INTERNAL_SERVER_ERROR_STATUS;
-            ctx.body = { message: statusCodes.INTERNAL_SERVER_ERROR_MESSAGE, error};
+            this.badRequest(ctx, INTERNAL_SERVER_ERROR_STATUS, INTERNAL_SERVER_ERROR_MESSAGE);
         }
     }
 
@@ -140,16 +131,13 @@ export class ProductController {
             const result = await this.productDataRepo.delete(id);
 
             if (result.affected === 0) {
-                ctx.status = statusCodes.NOT_FOUND_STATUS;
-                ctx.body = { message: statusCodes.NOT_FOUND_MESSAGE };
+                this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE);
                 return;
             }
 
-            ctx.status = statusCodes.OK_STATUS;
-            ctx.body = { message: statusCodes.OK_STATUS_MESSAGE };
+            this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
         } catch (error) {
-            ctx.status = statusCodes.INTERNAL_SERVER_ERROR_STATUS;
-            ctx.body = { message: statusCodes.INTERNAL_SERVER_ERROR_MESSAGE, error};
+            this.badRequest(ctx, INTERNAL_SERVER_ERROR_STATUS, INTERNAL_SERVER_ERROR_MESSAGE);
         }
     }
 }

@@ -1,11 +1,18 @@
 import {Client} from "../entities/Client";
 import {IRouterContext} from "koa-router";
-import * as statusCodes from "../utils/statusCode"
+import {
+    BAD_REQUEST_MESSAGE,
+    BAD_REQUEST_STATUS, CREATED_STATUS, CREATED_STATUS_MESSAGE,
+    INTERNAL_SERVER_ERROR_MESSAGE,
+    INTERNAL_SERVER_ERROR_STATUS, NOT_FOUND_MESSAGE, NOT_FOUND_STATUS, OK_STATUS, OK_STATUS_MESSAGE
+} from "../utils/statusCode";
+import {BaseController} from "./baseController";
 
-export class ClientController {
+export class ClientController extends BaseController {
     protected clientDataRepo: any;
 
     constructor(connection: any) {
+        super();
         this.clientDataRepo = connection.getRepository(Client);
 
 
@@ -20,8 +27,7 @@ export class ClientController {
         client.email = email;
         console.log(this.clientDataRepo);
         console.log(await this.clientDataRepo.save(client));
-        ctx.body = statusCodes.CREATED_STATUS
-        ctx.body = statusCodes.CREATED_STATUS_MESSAGE
+        this.okStatus(ctx, CREATED_STATUS, CREATED_STATUS_MESSAGE);
     }
 
 
@@ -33,10 +39,9 @@ export class ClientController {
             }
         });
         if(!clients){
-            ctx.status = statusCodes.NOT_FOUND_STATUS;
-            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
+            this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE)
         }
-        ctx.status = statusCodes.OK_STATUS;
+        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
         ctx.body = clients;
     }
 
@@ -53,12 +58,11 @@ export class ClientController {
             }
         });
         if (!clients) {
-            ctx.status = statusCodes.NOT_FOUND_STATUS;
-            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
+            this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
             return;
         }
         ctx.body = clients;
-        ctx.status = statusCodes.OK_STATUS;
+        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
     }
 
 
@@ -72,16 +76,14 @@ export class ClientController {
             }
         })
         if (!client) {
-            ctx.status = statusCodes.NOT_FOUND_STATUS;
-            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
+            this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE)
             return;
         }
         await this.clientDataRepo.update(id, {
             name: name,
             email: email
         })
-        ctx.status = statusCodes.OK_STATUS;
-        ctx.body = statusCodes.OK_STATUS_MESSAGE;
+        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
     }
 
 
@@ -90,10 +92,8 @@ export class ClientController {
         const id = +ctx.params.id;
         const deletedData = await this.clientDataRepo.delete({id});
         if (deletedData.affected === 0) {
-            ctx.status = statusCodes.NOT_FOUND_STATUS;
-            ctx.body = statusCodes.NOT_FOUND_MESSAGE;
+            this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
         }
-        ctx.status = statusCodes.OK_STATUS;
-        ctx.body = statusCodes.OK_STATUS_MESSAGE;
+        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
     }
 }
