@@ -11,6 +11,6 @@ export class Variant extends BaseEntity  {
     @Column({default: 0})
     inventory: number;
 
-    @ManyToOne(() => Product, (product) => product.variant)
+    @ManyToOne(() => Product, (product) => product.variant, {onDelete: "CASCADE"})
     product: Product;
 }

@@ -18,7 +18,7 @@ export class Product extends BaseEntity {
     @Column("json", { nullable: true })
     options?: Options;
 
-    @ManyToOne(() => Client, client => client.products)
+    @ManyToOne(() => Client, client => client.products, {onDelete: "CASCADE"})
     client: Client;
 
     @OneToMany(() => Variant, (variant) => variant.product, {cascade: true})
