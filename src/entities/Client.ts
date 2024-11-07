@@ -1,9 +1,9 @@
 import {Column, Entity, OneToMany} from 'typeorm';
 import {Product} from "./Product";
-import { BaseEntity } from "./BaseEntity"
+import {BaseEntity} from "./BaseEntity"
 
 @Entity("Client")
-export class Client extends BaseEntity{
+export class Client extends BaseEntity {
 
     @Column()
     email: string;

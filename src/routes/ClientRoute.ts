@@ -3,7 +3,7 @@ import {ClientController} from "../controllers/ClientController";
 
 const clientRouters = new Router();
 
-export function ClientRouter( connection: any) {
+export function ClientRouter(connection: any) {
 
     const clientController = new ClientController(connection);
 

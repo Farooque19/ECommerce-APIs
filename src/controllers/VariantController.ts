@@ -82,9 +82,11 @@ export class VariantController extends BaseController {
     //Get all Variants for a product
     public async getVariantsForProduct(ctx: IRouterContext) {
         const id = ctx.params.productId;
+
         if (isNaN(+id) || +id <= 0) {
             return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
         }
+
         const variant = await this.variantDataRepo.find({
             where: {
                 product: {
@@ -170,5 +172,4 @@ export class VariantController extends BaseController {
 
         this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
     }
-
 }

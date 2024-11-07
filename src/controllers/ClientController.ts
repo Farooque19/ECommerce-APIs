@@ -115,7 +115,7 @@ export class ClientController extends BaseController {
             }
         })
 
-        if(!clientData){
+        if (!clientData) {
             return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE);
         }
 

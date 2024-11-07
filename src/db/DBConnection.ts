@@ -1,7 +1,7 @@
-import { DataSource } from "typeorm";
-import { Client } from "../entities/Client";
-import { Variant } from "../entities/Variant";
-import { Product } from "../entities/Product";
+import {DataSource} from "typeorm";
+import {Client} from "../entities/Client";
+import {Variant} from "../entities/Variant";
+import {Product} from "../entities/Product";
 
 export class DBConnection {
     protected connection: any | undefined = undefined;
