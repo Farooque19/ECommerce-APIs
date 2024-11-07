@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne } from "typeorm";
 import { Product } from "./Product";
-import { BaseEntity } from "./baseEntity"
+import { BaseEntity } from "./BaseEntity"
 
 @Entity("Variant")
 export class Variant extends BaseEntity  {

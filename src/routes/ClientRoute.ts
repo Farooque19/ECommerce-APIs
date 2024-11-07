@@ -1,11 +1,11 @@
 import Router from 'koa-router';
-import {ClientController} from "../controllers/clientController";
+import {ClientController} from "../controllers/ClientController";
 
 const clientRouters = new Router();
 
-export function ClientRouter(connection: any) {
+export function ClientRouter( ) {
 
-    const clientController = new ClientController(connection);
+    const clientController = new ClientController();
 
     clientRouters.post("/api/clients", (ctx) => clientController.createClient(ctx));
 

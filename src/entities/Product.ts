@@ -6,8 +6,8 @@ import {
 } from 'typeorm';
 import { Client } from "./Client";
 import { Variant } from "./Variant";
-import { BaseEntity } from "./baseEntity"
-import { Options } from "../config/type";
+import { BaseEntity } from "./BaseEntity"
+import { Options } from "../config/Type";
 
 @Entity("Products")
 export class Product extends BaseEntity {

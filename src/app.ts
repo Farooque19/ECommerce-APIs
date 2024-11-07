@@ -1,20 +1,17 @@
 import "reflect-metadata";
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
-import { DBConnection } from "./db/dbConnection";
-import { ClientRouter } from "./routes/clientRoute"
-import { ProductRouter } from "./routes/productRoute";
-import { VariantRouter } from "./routes/variantRoute";
+import { ClientRouter } from "./routes/ClientRoute"
+import { ProductRouter } from "./routes/ProductRoute";
+import { VariantRouter } from "./routes/VariantRoute";
 
 (async () => {
-    const dbConnect = new DBConnection();
-    const connection= await dbConnect.connect();
     const app = new Koa();
 
     const PORT = process.env.PORT || 3000;
-    const clientRoutes = ClientRouter(connection);
-    const productRoutes = ProductRouter(connection);
-    const variantRoutes = VariantRouter(connection);
+    const clientRoutes = ClientRouter();
+    const productRoutes = ProductRouter();
+    const variantRoutes = VariantRouter();
 
     app.use(bodyParser());
 

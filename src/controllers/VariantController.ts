@@ -1,16 +1,15 @@
-import { Variant } from "../entities/Variant"
-import { DBConnection } from "../db/dbConnection";
-import { IRouterContext } from "koa-router";
-import { Product } from "../entities/Product";
-import { Options, PriceMapping } from "../config/type";
-import {BaseController} from "./baseController";
+import {Variant} from "../entities/Variant"
+import {IRouterContext} from "koa-router";
+import {Product} from "../entities/Product";
+import {Options, PriceMapping} from "../config/Type";
+import {BaseController} from "./BaseController";
 import {
     BAD_REQUEST_MESSAGE,
     BAD_REQUEST_STATUS, CREATED_STATUS, CREATED_STATUS_MESSAGE,
     NOT_FOUND_MESSAGE, NOT_FOUND_STATUS, OK_STATUS, OK_STATUS_MESSAGE
-} from "../utils/statusCode";
-
-
+} from "../utils/StatusCode";
+import {Repository} from "typeorm";
+import {getProductRepository, getVariantRepository} from "../Repository/Repository";
 
 function generateVariants(options: Options, priceMapping: PriceMapping, product: Product): Variant[] {
     const variants: Variant[] = [];
@@ -34,25 +33,33 @@ function generateVariants(options: Options, priceMapping: PriceMapping, product:
     return variants;
 }
 
-const dbConnect = new DBConnection();
 
+export class VariantController extends BaseController {
+    protected variantDataRepo: Repository<Variant>;
+    protected productDataRepo: Repository<Product>;
 
-export class VariantController extends BaseController{
-    protected variantDataRepo : any;
-
-    constructor(connection: any) {
+    constructor() {
         super();
-        this.variantDataRepo = connection.getRepository(Variant);
+        (async () => {
+            this.variantDataRepo = await getVariantRepository();
+            this.productDataRepo = await getProductRepository();
+        })()
     }
-
 
     //Create Variant for a Product
     public async createVariantForProduct(ctx: IRouterContext) {
-        const productDataRepo = (await dbConnect.connect()).getRepository(Product);
         const productId = ctx.params.productId;
-        const { priceMapping } = ctx.request.body as { priceMapping: PriceMapping };
+        const {priceMapping} = ctx.request.body as { priceMapping: PriceMapping };
 
-        const product = await productDataRepo.findOneOrFail({
+        if (isNaN(+productId) || +productId <= 0) {
+            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
+        }
+
+        if (!priceMapping) {
+            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
+        }
+
+        const product = await this.productDataRepo.findOneOrFail({
             where: {
                 id: +productId
             }
@@ -63,7 +70,7 @@ export class VariantController extends BaseController{
             return;
         }
 
-        const { options } = product;
+        const {options} = product;
 
         if (!options || !options.color || !options.size) {
             this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
@@ -75,10 +82,12 @@ export class VariantController extends BaseController{
         this.okStatus(ctx, CREATED_STATUS, CREATED_STATUS_MESSAGE);
     }
 
-
     //Get all Variants for a product
     public async getVariantsForProduct(ctx: IRouterContext) {
         const id = ctx.params.productId;
+        if (isNaN(+id) || +id <= 0) {
+            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
+        }
         const variant = await this.variantDataRepo.find({
             where: {
                 product: {
@@ -86,62 +95,82 @@ export class VariantController extends BaseController{
                 }
             }
         });
-        if (!variant) {
-            this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
-            return;
+
+        if (!variant || variant.length === 0) {
+            return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
         }
+
         ctx.body = variant;
         this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
     }
 
-
     //Get Variant by id
     public async getVariantById(ctx: IRouterContext) {
         const id = +ctx.params.id;
-        const variant = await this.variantDataRepo.findOne({
+
+        if (isNaN(+id) || +id <= 0) {
+            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
+        }
+
+        const variant = await this.variantDataRepo.findOneOrFail({
             where: {
                 id: +id
             }
         });
-        if (!variant || variant.length === 0) {
+
+        if (!variant) {
             this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE)
             return;
         }
+
         ctx.body = variant;
-        this,this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
+        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
     }
 
 
     //Update Variant by id
     public async updateVariantById(ctx: IRouterContext) {
         const id = +ctx.params.id;
+
+        if (isNaN(+id) || +id <= 0) {
+            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
+        }
+
         const {name, price, inventory} = ctx.request.body as { name: string; price: number; inventory: number; };
         const variant = await this.variantDataRepo.findOne({
             where: {
                 id: id
             }
         });
-        if(!variant){
-            this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
-            return
+
+        if (!variant) {
+            return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
         }
+
         await this.variantDataRepo.update(id, {
             name: name,
             price: price,
             inventory: inventory
         });
+
         this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
     }
 
 
     //Delete Variant by id
-    public async deleteVariantById(ctx: IRouterContext){
+    public async deleteVariantById(ctx: IRouterContext) {
         const id = ctx.params.id;
-        const result = await this.variantDataRepo.delete(id);
-        if(result.affected === 0){
-            this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
-            return;
+
+        if (isNaN(+id) || +id <= 0) {
+            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
         }
+
+        const result = await this.variantDataRepo.delete(id);
+
+        if (result.affected === 0) {
+            return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
+        }
+
         this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
     }
 
