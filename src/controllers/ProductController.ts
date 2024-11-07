@@ -10,18 +10,22 @@ import {
     INTERNAL_SERVER_ERROR_STATUS, NOT_FOUND_MESSAGE, NOT_FOUND_STATUS, OK_STATUS, OK_STATUS_MESSAGE
 } from "../utils/statusCode";
 import {BaseController} from "./baseController";
+import {Repository} from "typeorm";
 
 const dbConnect = new DBConnection();
 
 export class ProductController extends BaseController{
-    protected productDataRepo : any;
+    protected productDataRepo : Repository<Product>;
+    protected clientDataRepo : Repository<Client>;
     constructor(connection: any) {
         super();
         this.productDataRepo = connection.getRepository(Product);
+        this.clientDataRepo = connection.getRepository(Client);
     }
 
     // Create Product for a Client
     public async createProductForClient(ctx: IRouterContext) {
+        //todo:: do we need this?
         const clientDataRepo = (await dbConnect.connect()).getRepository(Client);
 
         const id = ctx.params.id;
