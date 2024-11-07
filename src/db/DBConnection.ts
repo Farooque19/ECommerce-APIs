@@ -4,7 +4,7 @@ import { Variant } from "../entities/Variant";
 import { Product } from "../entities/Product";
 
 export class DBConnection {
-    private connection: DataSource | undefined = undefined;
+    protected connection: any | undefined = undefined;
 
     private postgresDataSource = new DataSource({
         type: "postgres",
@@ -18,19 +18,16 @@ export class DBConnection {
     });
 
     constructor() {
-        this.connection = undefined;
+        this.connection = this.postgresDataSource;
     }
 
-    public async connect(): Promise<DataSource> {
-        // Check if connection is already established
-        if (this.connection?.isInitialized) {
-            console.log("Reusing existing database connection");
-            return this.connection;
-        }
-
-        // Initialize connection if not already done
+    async connect() {
         this.connection = await this.postgresDataSource.initialize();
-        console.log("Database connected");
-        return this.connection;
+        if (this.connection) {
+            console.log("Database Connected");
+            return this.postgresDataSource;
+        } else {
+            throw new Error("Database Connection failed");
+        }
     }
 }

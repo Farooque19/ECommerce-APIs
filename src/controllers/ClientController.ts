@@ -1,5 +1,4 @@
 import {Client} from "../entities/Client";
-import {getClientRepository} from "../Repository/Repository";
 import {IRouterContext} from "koa-router";
 import {
     BAD_REQUEST_MESSAGE,
@@ -12,11 +11,9 @@ import {Repository} from "typeorm";
 export class ClientController extends BaseController {
     protected clientDataRepo: Repository<Client>;
 
-    constructor() {
+    constructor(connection: any) {
         super();
-        (async () => {
-            this.clientDataRepo = await getClientRepository();
-        })();
+        this.clientDataRepo = connection.getRepository(Client);
     }
 
     //Create new client
@@ -57,11 +54,7 @@ export class ClientController extends BaseController {
     public async getClientById(ctx: IRouterContext) {
         const id = +ctx.params.id;
 
-        if (isNaN(+id) || +id <= 0) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-        }
-
-        const clients = await this.clientDataRepo.findOne({
+        const clients = await this.clientDataRepo.find({
             where: {
                 id: id
             },
@@ -84,12 +77,12 @@ export class ClientController extends BaseController {
     public async updateClientById(ctx: IRouterContext) {
         const id = +ctx.params.id;
 
-        if (isNaN(id) || id <= 0 || !id) {
+        if (isNaN(id) || id <= 0) {
             return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
         }
 
         const {name, email} = ctx.request.body as { name: string; email: string };
-        const client = await this.clientDataRepo.findOne({
+        const client = await this.clientDataRepo.find({
             where: {
                 id: id
             }
@@ -116,7 +109,7 @@ export class ClientController extends BaseController {
             return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
         }
 
-        const clientData = await this.clientDataRepo.findOne({
+        const clientData = await this.clientDataRepo.find({
             where: {
                 id: id
             }
@@ -130,6 +123,7 @@ export class ClientController extends BaseController {
         if (deletedData.affected === 0) {
             this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
         }
+        ctx.body = deletedData;
         this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
     }
 }

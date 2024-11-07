@@ -9,18 +9,15 @@ import {
     INTERNAL_SERVER_ERROR_STATUS, NOT_FOUND_MESSAGE, NOT_FOUND_STATUS, OK_STATUS, OK_STATUS_MESSAGE
 } from "../utils/StatusCode";
 import {BaseController} from "./BaseController";
-import {getClientRepository, getProductRepository} from "../Repository/Repository";
 import {Repository} from "typeorm";
 
 export class ProductController extends BaseController{
     protected productDataRepo : Repository<Product>;
     protected clientDataRepo : Repository<Client>;
-    constructor() {
+    constructor(connection: any) {
         super();
-        (async () => {
-            this.productDataRepo = await getProductRepository();
-            this.clientDataRepo = await getClientRepository()
-        })();
+            this.productDataRepo =  connection.getRepository(Product);
+            this.clientDataRepo = connection.getRepository(Client);
     }
 
     // Create Product for a Client
@@ -71,7 +68,7 @@ export class ProductController extends BaseController{
         }
 
         try {
-            const products = await this.productDataRepo.findOneOrFail({
+            const products = await this.productDataRepo.findOne({
                 where: {
                     client: {
                         id: +clientId
@@ -100,12 +97,12 @@ export class ProductController extends BaseController{
          }
 
         try {
-            const product = await this.productDataRepo.find({
+            const product = await this.productDataRepo.findOne({
                 where: { id },
                 relations: { variant: true },
             });
 
-            if (!product || product.length === 0) {
+            if (!product) {
                 return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE);
             }
 
@@ -162,6 +159,7 @@ export class ProductController extends BaseController{
             }
 
             this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
+            ctx.body = result;
         } catch (error) {
             this.badRequest(ctx, INTERNAL_SERVER_ERROR_STATUS, INTERNAL_SERVER_ERROR_MESSAGE);
         }

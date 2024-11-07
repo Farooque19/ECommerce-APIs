@@ -3,8 +3,8 @@ import { ProductController } from "../controllers/ProductController";
 
 const productRouter = new Router();
 
-export function ProductRouter() {
-    const productController = new ProductController();
+export function ProductRouter(connection: any) {
+    const productController = new ProductController(connection);
 
     productRouter.post("/api/clients/:id/products", (ctx) => productController.createProductForClient(ctx));
 

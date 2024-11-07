@@ -9,7 +9,6 @@ import {
     NOT_FOUND_MESSAGE, NOT_FOUND_STATUS, OK_STATUS, OK_STATUS_MESSAGE
 } from "../utils/StatusCode";
 import {Repository} from "typeorm";
-import {getProductRepository, getVariantRepository} from "../Repository/Repository";
 
 function generateVariants(options: Options, priceMapping: PriceMapping, product: Product): Variant[] {
     const variants: Variant[] = [];
@@ -38,12 +37,10 @@ export class VariantController extends BaseController {
     protected variantDataRepo: Repository<Variant>;
     protected productDataRepo: Repository<Product>;
 
-    constructor() {
+    constructor(connection: any) {
         super();
-        (async () => {
-            this.variantDataRepo = await getVariantRepository();
-            this.productDataRepo = await getProductRepository();
-        })()
+        this.variantDataRepo = connection.getRepository(Variant);
+        this.productDataRepo = connection.getRepository(Product);
     }
 
     //Create Variant for a Product

@@ -3,9 +3,9 @@ import {ClientController} from "../controllers/ClientController";
 
 const clientRouters = new Router();
 
-export function ClientRouter( ) {
+export function ClientRouter( connection: any) {
 
-    const clientController = new ClientController();
+    const clientController = new ClientController(connection);
 
     clientRouters.post("/api/clients", (ctx) => clientController.createClient(ctx));
 

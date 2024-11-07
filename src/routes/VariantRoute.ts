@@ -3,8 +3,8 @@ import { VariantController } from "../controllers/VariantController";
 
 const variantRouter = new Router();
 
-export function VariantRouter(){
-    const variantController = new VariantController();
+export function VariantRouter(connection: any){
+    const variantController = new VariantController(connection);
 
     variantRouter.post("/api/products/:productId/variants", (ctx) => variantController.createVariantForProduct(ctx));
 
