@@ -1,11 +1,11 @@
 export class BaseController {
-    okStatus(ctx: any, statusCode: number, statusMessage: any) {
+    okStatus(ctx: any, statusCode: number, bodyMessage: any) {
         ctx.status = statusCode;
-        ctx.message = statusMessage;
+        ctx.body = bodyMessage;
     }
 
-    badRequest(ctx: any, statusCode: number, message: any) {
+    badRequest(ctx: any, statusCode: number, bodyMessage: any) {
         ctx.status = statusCode;
-        ctx.message = message;
+        ctx.body = bodyMessage;
     }
 }

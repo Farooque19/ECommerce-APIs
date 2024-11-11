@@ -1,9 +1,7 @@
 import {Client} from "../entities/Client";
 import {IRouterContext} from "koa-router";
 import {
-    BAD_REQUEST_MESSAGE,
-    BAD_REQUEST_STATUS, CREATED_STATUS, CREATED_STATUS_MESSAGE,
-    NOT_FOUND_MESSAGE, NOT_FOUND_STATUS, OK_STATUS, OK_STATUS_MESSAGE
+    BAD_REQUEST_STATUS, CREATED_STATUS, NOT_FOUND_STATUS, OK_STATUS, VALID_ID
 } from "../utils/StatusCode";
 import {BaseController} from "./BaseController";
 import {Repository} from "typeorm";
@@ -18,112 +16,122 @@ export class ClientController extends BaseController {
 
     //Create new client
     public async createClient(ctx: any) {
+        try {
 
-        const {name, email} = ctx.request.body as { name: string; email: string };
+            const {name, email} = ctx.request.body as { name: string; email: string };
 
-        if (!name && !email) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
+            if (!name || !email) {
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, "Please provide name and email.");
+            }
+
+            const client = new Client();
+            client.name = name;
+            client.email = email;
+            await this.clientDataRepo.save(client);
+            return this.okStatus(ctx, CREATED_STATUS, "Client Created Successfully.");
+        } catch (error) {
+            return this.badRequest(ctx, ctx.status, error);
         }
-
-        const client = new Client();
-        client.name = name;
-        client.email = email;
-        await this.clientDataRepo.save(client);
-        this.okStatus(ctx, CREATED_STATUS, CREATED_STATUS_MESSAGE);
     }
 
 
-    //Get all Clients
+    //Get all Clients f
     public async getClients(ctx: IRouterContext) {
-        const clients = await this.clientDataRepo.find({
-            relations: {
-                products: true
+        try {
+
+            const clients = await this.clientDataRepo.find();
+
+            if(!clients){
+                return this.badRequest(ctx, NOT_FOUND_STATUS, "Client Not Found.");
             }
-        });
 
-        if (!clients) {
-            this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE)
+            return this.okStatus(ctx, OK_STATUS, clients);
+        } catch (error) {
+            return this.badRequest(ctx, ctx.status, "Clients Not Found");
         }
-
-        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
-        ctx.body = clients;
     }
 
 
     //Get Clients by id
     public async getClientById(ctx: IRouterContext) {
-        const id = +ctx.params.id;
+        try {
 
-        const clients = await this.clientDataRepo.find({
-            where: {
-                id: id
-            },
-            relations: {
-                products: true
+            const id = Number(ctx.params.id);
+
+            if(!id){
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
             }
-        });
 
-        if (!clients) {
-            this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
-            return;
+            const clients = await this.clientDataRepo.findOne({
+                where: {
+                    id: id
+                }
+            });
+
+            if (!clients) {
+                return this.badRequest(ctx, NOT_FOUND_STATUS, "Client Not Found.");
+            }
+
+            return this.okStatus(ctx, OK_STATUS, clients);
+        } catch (error) {
+            return this.badRequest(ctx, ctx.status, error);
         }
-
-        ctx.body = clients;
-        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
     }
 
 
     //Update Client by id
     public async updateClientById(ctx: IRouterContext) {
-        const id = +ctx.params.id;
+        try {
 
-        if (isNaN(id) || id <= 0) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-        }
+            const id = Number(ctx.params.id);
 
-        const {name, email} = ctx.request.body as { name: string; email: string };
-        const client = await this.clientDataRepo.find({
-            where: {
-                id: id
+            if(!id){
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
             }
-        })
 
-        if (!client) {
-            this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE)
-            return;
+            const {name, email} = ctx.request.body as { name: string; email: string };
+
+            const client = await this.clientDataRepo.findOne({
+                where: {
+                    id: id
+                }
+            });
+
+            if (!client) {
+                return this.badRequest(ctx, NOT_FOUND_STATUS, "Client Not Found.");
+            }
+
+            await this.clientDataRepo.update(id, {
+                name: name,
+                email: email
+            })
+            return this.okStatus(ctx, OK_STATUS, "Client Data Updated Successfully.")
+        } catch (error) {
+            return this.badRequest(ctx, ctx.status, error);
         }
-
-        await this.clientDataRepo.update(id, {
-            name: name,
-            email: email
-        })
-        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
     }
 
 
     //Delete Client by id
     public async deleteClientById(ctx: IRouterContext) {
-        const id = +ctx.params.id;
+        try {
 
-        if (isNaN(id) || id <= 0 || (!id)) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-        }
+            const id = Number(ctx.params.id);
 
-        const clientData = await this.clientDataRepo.find({
-            where: {
-                id: id
+            if(!id){
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
             }
-        })
 
-        if (!clientData) {
-            return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE);
-        }
+            const deletedData = await this.clientDataRepo.delete({id});
 
-        const deletedData = await this.clientDataRepo.delete({id});
-        if (deletedData.affected === 0) {
-            this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
+            if (deletedData.affected === 0) {
+                return this.badRequest(ctx, NOT_FOUND_STATUS, "Client Not Found.")
+            }
+
+            ctx.body = deletedData;
+            return this.okStatus(ctx, OK_STATUS, "Client Data Deleted Successfully.");
+        } catch (error) {
+            return this.badRequest(ctx, ctx.status, error);
         }
-        ctx.body = deletedData;
-        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
     }
 }

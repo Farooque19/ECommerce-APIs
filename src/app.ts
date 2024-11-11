@@ -22,12 +22,12 @@ import Router from "koa-router";
 
     const router = new Router();
 
-    router.use(clientRoutes.routes()).use(clientRoutes.allowedMethods());
-    router.use(productRoutes.routes()).use(productRoutes.allowedMethods());
-    router.use(variantRoutes.routes()).use(variantRoutes.allowedMethods());
+    router.use(clientRoutes.routes());
+    router.use(productRoutes.routes());
+    router.use(variantRoutes.routes());
 
     app.use(bodyParser());
-    app.use(router.routes()).use(clientRoutes.allowedMethods());
+    app.use(router.routes()).use(router.allowedMethods());
 
     app.listen(PORT, () => {
         console.log(`Listening on port ${PORT}`);

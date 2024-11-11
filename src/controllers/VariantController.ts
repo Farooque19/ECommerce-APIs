@@ -1,37 +1,76 @@
 import {Variant} from "../entities/Variant"
 import {IRouterContext} from "koa-router";
 import {Product} from "../entities/Product";
-import {Options, PriceMapping} from "../config/Type";
 import {BaseController} from "./BaseController";
 import {
-    BAD_REQUEST_MESSAGE,
-    BAD_REQUEST_STATUS, CREATED_STATUS, CREATED_STATUS_MESSAGE,
-    NOT_FOUND_MESSAGE, NOT_FOUND_STATUS, OK_STATUS, OK_STATUS_MESSAGE
+    BAD_REQUEST_STATUS, CREATED_STATUS,
+    NOT_FOUND_STATUS, OK_STATUS, VALID_ID
 } from "../utils/StatusCode";
 import {Repository} from "typeorm";
+import {Options} from "../config/Type";
 
-function generateVariants(options: Options, priceMapping: PriceMapping, product: Product): Variant[] {
+function generateVariants(options: Options, product: Product): Variant[] {
     const variants: Variant[] = [];
+    const values: any[] = [];
+    const keys: string[] = Object.keys(options);
 
-    // Loop through each key in options to create variant combinations
-    const colors = options.color || [];
-    const sizes = options.size || [];
-
-    for (let color of colors) {
-        for (let size of sizes) {
-            const variantName = `${color} / ${size}`; // e.g., "Red / S"
-            const variantPrice = priceMapping[variantName] || 0; // Get price from mapping or default to 0
-            const variant = new Variant(); // Create new Variant instance
-            variant.name = variantName;
-            variant.price = variantPrice;
-            variant.product = product; // Link the variant to the product
-            variants.push(variant); // Add the variant to the array
-        }
+    for (let i: number = 0; i < keys.length; i++) {
+        values[i] = Object.values(options)[i].value;
     }
 
+    let variantName: string[] = [];
+
+    if (values.length === 1) {
+        let count : number = 0;
+        let val1: any[] = values[0];
+        for (let value1 of val1) {
+            variantName.push(value1);
+            eachVariant(variantName, product, variants);
+            count++;
+        }
+
+    } else if (values.length === 2) {
+        let count : number = 0;
+        const val1: any[] = values[0];
+        const val2: any[] = values[1];
+        for (let value1 of val1) {
+            for (let value2 of val2) {
+                variantName.push(`${value1} / ${value2}`)
+                eachVariant(variantName, product, variants);
+                count++;
+            }
+        }
+        console.log(count);
+    } else {
+        const val1: any[] = values[0];
+        const val2: any[] = values[1];
+        const val3: any[] = values[2];
+
+        let count : number = 0;
+        for (let value1 of val1) {
+            for (let value2 of val2) {
+                for (let value3 of val3) {
+                    variantName.push(`${value1} / ${value2} / ${value3}`);
+                    eachVariant(variantName, product, variants);
+                    count++;
+                }
+            }
+        }
+    }
     return variants;
 }
 
+function eachVariant(variantName : string[], product: Product, variants: Variant[]) : void{
+    const variant = new Variant();
+    variant.name = variantName[0];
+    while(variantName.length > 0) {
+        variantName.pop();
+    }
+    console.log(variant.name);
+    variant.price = Math.floor(Math.random() * 1000) + 1;
+    variant.product = product;
+    variants.push(variant);
+}
 
 export class VariantController extends BaseController {
     protected variantDataRepo: Repository<Variant>;
@@ -45,131 +84,180 @@ export class VariantController extends BaseController {
 
     //Create Variant for a Product
     public async createVariantForProduct(ctx: IRouterContext) {
-        const productId = ctx.params.productId;
-        const {priceMapping} = ctx.request.body as { priceMapping: PriceMapping };
+        try {
 
-        if (isNaN(+productId) || +productId <= 0) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-        }
+            const productId = Number(ctx.params.productId);
 
-        if (!priceMapping) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-        }
-
-        const product = await this.productDataRepo.findOneOrFail({
-            where: {
-                id: +productId
+            if(!productId) {
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID);
             }
-        });
 
-        if (!product) {
-            this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-            return;
+            const product = await this.productDataRepo.findOne({
+                where: {
+                    id: productId
+                }
+            });
+
+            if (!product) {
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, "Cannot create variant as product does not exists.");
+            }
+
+            const options = ctx.request.body as Options;
+
+            if(!options){
+                return this.badRequest(ctx, NOT_FOUND_STATUS, "Options not provided correctly.");
+            }
+
+            if(Object.keys(options).length === 0) {
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, "Must contain at least one option.");
+            }
+
+            if(Object.keys(options).length > 3) {
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, "Maximum allowed options are 3.");
+            }
+
+            for(let key of Object.keys(options)) {
+                const option = options[key];
+
+                if(!option.name || !option.value){
+                    return this.badRequest(ctx, BAD_REQUEST_STATUS, "Name and Value both should be provided.");
+                }
+
+                if(option.value.length === 0){
+                    return this.badRequest(ctx, BAD_REQUEST_STATUS, "Value should be provided.");
+                }
+
+                for(let optionVal of option.value){
+                    if(optionVal.trim() === ""){
+                        return this.badRequest(ctx, BAD_REQUEST_STATUS, "Value cannot be empty or undefined.");
+                    }
+                }
+
+            }
+
+            const variant: Variant[] = generateVariants(options, product);
+
+            await this.variantDataRepo.save(variant);
+            return this.okStatus(ctx, CREATED_STATUS, "Variant Created");
+        } catch (error) {
+            return this.badRequest(ctx, ctx.status, error);
         }
-
-        const {options} = product;
-
-        if (!options || !options.color || !options.size) {
-            this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-            return;
-        }
-
-        const variants = generateVariants(options, priceMapping, product);
-        await this.variantDataRepo.save(variants);
-        this.okStatus(ctx, CREATED_STATUS, CREATED_STATUS_MESSAGE);
     }
 
     //Get all Variants for a product
     public async getVariantsForProduct(ctx: IRouterContext) {
-        const id = ctx.params.productId;
+        try {
+            const id: number = Number(ctx.params.productId);
 
-        if (isNaN(+id) || +id <= 0) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-        }
-
-        const variant = await this.variantDataRepo.find({
-            where: {
-                product: {
-                    id: +id
-                }
+            if(!id){
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
             }
-        });
 
-        if (!variant || variant.length === 0) {
-            return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
+            const prod = await this.productDataRepo.findOne({
+                where: {
+                    id: id
+                }
+            });
+
+            if (!prod) {
+                return this.badRequest(ctx, NOT_FOUND_STATUS, "Product Not Found");
+            }
+
+            const variant = await this.variantDataRepo.find({
+                where: {
+                    product: {
+                        id: id
+                    }
+                }
+            });
+
+            return this.okStatus(ctx, OK_STATUS, variant);
+        } catch (error) {
+            return this.badRequest(ctx, NOT_FOUND_STATUS, error);
         }
-
-        ctx.body = variant;
-        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
     }
 
     //Get Variant by id
     public async getVariantById(ctx: IRouterContext) {
-        const id = +ctx.params.id;
+        try {
 
-        if (isNaN(+id) || +id <= 0) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-        }
+            const id: number = Number(ctx.params.id);
 
-        const variant = await this.variantDataRepo.findOneOrFail({
-            where: {
-                id: +id
+            if(!id){
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
             }
-        });
 
-        if (!variant) {
-            this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE)
-            return;
+            const variant = await this.variantDataRepo.findOne({
+                where: {
+                    id: id
+                }
+            });
+
+            if (!variant) {
+                return this.badRequest(ctx, NOT_FOUND_STATUS, "Variant Not Found.");
+            }
+
+            return this.okStatus(ctx, OK_STATUS, variant);
+        } catch (error) {
+            return this.badRequest(ctx, ctx.status, error);
         }
-
-        ctx.body = variant;
-        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
     }
 
 
     //Update Variant by id
     public async updateVariantById(ctx: IRouterContext) {
-        const id = +ctx.params.id;
+        try {
 
-        if (isNaN(+id) || +id <= 0) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-        }
+            const id: number = Number(ctx.params.id);
 
-        const {name, price, inventory} = ctx.request.body as { name: string; price: number; inventory: number; };
-        const variant = await this.variantDataRepo.findOne({
-            where: {
-                id: id
+            if(!id){
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
             }
-        });
 
-        if (!variant) {
-            return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
+            const {name, price, inventory} = ctx.request.body as { name: string; price: number; inventory: number; };
+
+            const variant = await this.variantDataRepo.findOne({
+                where: {
+                    id: id
+                }
+            });
+
+            if (!variant) {
+                return this.badRequest(ctx, NOT_FOUND_STATUS, "Variant Not Found.");
+            }
+
+            await this.variantDataRepo.update(id, {
+                name: name,
+                price: price,
+                inventory: inventory
+            });
+
+            return this.okStatus(ctx, OK_STATUS, "Variant Updated Successfully.");
+        } catch (error) {
+            return this.badRequest(ctx, ctx.status, error);
         }
-
-        await this.variantDataRepo.update(id, {
-            name: name,
-            price: price,
-            inventory: inventory
-        });
-
-        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
     }
 
 
     //Delete Variant by id
-    public async deleteVariantById(ctx: IRouterContext) {
-        const id = ctx.params.id;
+    public async deleteVariantById(ctx: IRouterContext): Promise<void> {
+        try {
 
-        if (isNaN(+id) || +id <= 0) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
+            const id: number = Number(ctx.params.id);
+
+            if(!id){
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
+            }
+
+            const result = await this.variantDataRepo.delete(id);
+
+            if (result.affected === 0) {
+                return this.badRequest(ctx, NOT_FOUND_STATUS, "Variant Not Found.");
+            }
+
+            return this.okStatus(ctx, OK_STATUS, "Variant Deleted Successfully.");
+        } catch (error) {
+            return this.badRequest(ctx, ctx.status, error);
         }
-
-        const result = await this.variantDataRepo.delete(id);
-
-        if (result.affected === 0) {
-            return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
-        }
-
-        this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
     }
 }

@@ -1,12 +1,8 @@
 import {Client} from "../entities/Client";
 import {IRouterContext} from "koa-router";
 import {Product} from "../entities/Product";
-import {Options} from "../config/Type";
 import {
-    BAD_REQUEST_MESSAGE,
-    BAD_REQUEST_STATUS,
-    INTERNAL_SERVER_ERROR_MESSAGE,
-    INTERNAL_SERVER_ERROR_STATUS, NOT_FOUND_MESSAGE, NOT_FOUND_STATUS, OK_STATUS, OK_STATUS_MESSAGE
+    BAD_REQUEST_STATUS, NOT_FOUND_STATUS, OK_STATUS, VALID_ID
 } from "../utils/StatusCode";
 import {BaseController} from "./BaseController";
 import {Repository} from "typeorm";
@@ -23,116 +19,118 @@ export class ProductController extends BaseController {
 
     // Create Product for a Client
     public async createProductForClient(ctx: IRouterContext) {
-        const id = ctx.params.id;
-        const {name, description, options} = ctx.request.body as {
-            name: string;
-            description: string;
-            options?: Options
-        };
-
-        if (isNaN(+id) || +id <= 0) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-        }
-
-        if (!description || description.trim() === "") {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-        }
-
-        if (!name || name.trim() === "") {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-        }
-
-        if (!options) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE);
-        }
-
-        const client = await this.clientDataRepo.findOneOrFail({
-            where: {id: +id}
-        });
-
-        const prod = new Product();
-        prod.name = name;
-        prod.description = description;
-        prod.client = client;
-        prod.options = options;
-
         try {
+            const id = Number(ctx.params.id);
+            const {name, description} = ctx.request.body as {
+                name: string;
+                description: string;
+            };
+
+            if(!id){
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
+            }
+
+            if (!description || description.trim() === "") {
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, "Description must be provided.");
+            }
+
+            if (!name || name.trim() === "") {
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, "Name must be provided.");
+            }
+
+            const client = await this.clientDataRepo.findOne({
+                where: {
+                    id
+                }
+            });
+
+            if(!client){
+                return this.badRequest(ctx, NOT_FOUND_STATUS, "Cannot create product for the given client ID(Client does not exist).");
+            }
+
+            const prod = new Product();
+            prod.name = name;
+            prod.description = description;
+            prod.client = client as Client;
+
             await this.productDataRepo.save(prod);
-            this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
+            return this.okStatus(ctx, OK_STATUS, "Product Created Successfully.");
+
         } catch (error) {
-            this.badRequest(ctx, INTERNAL_SERVER_ERROR_STATUS, INTERNAL_SERVER_ERROR_MESSAGE)
+            this.badRequest(ctx, ctx.status, "Client Not Found.");
         }
     }
 
     // Get All Products for a Client
     public async getProductForClient(ctx: IRouterContext) {
-        const clientId = ctx.params.id;
-
-        if (!clientId) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE)
-        }
-
         try {
+
+            const id = Number(ctx.params.id);
+
+            if(!id){
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
+            }
+
+            const client = await this.clientDataRepo.findOne({
+                where: {
+                    id: id
+                }
+            });
+
             const products = await this.productDataRepo.findOne({
                 where: {
                     client: {
-                        id: +clientId
+                        id: id
                     }
-                },
-                relations: {variant: true},  // Include variants if needed
+                }
             });
 
-            if (!products) {
-                return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE);
-            }
-
-            this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
-            ctx.body = products;
+            return this.okStatus(ctx, OK_STATUS, products);
         } catch (error) {
-            this.badRequest(ctx, INTERNAL_SERVER_ERROR_STATUS, INTERNAL_SERVER_ERROR_MESSAGE);
+            return this.badRequest(ctx, ctx.status, error);
         }
     }
 
     // Get Product by Id
     async getProductById(ctx: IRouterContext) {
-        const id = +ctx.params.id;
-
-        if (!id) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE)
-        }
-
         try {
+
+            const id = Number(ctx.params.id);
+
+            if(!id){
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
+            }
+
             const product = await this.productDataRepo.findOne({
-                where: {id},
-                relations: {variant: true},
+                where: {id: id}
             });
 
             if (!product) {
-                return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE);
+                return this.badRequest(ctx, NOT_FOUND_STATUS, "Product not found.");
             }
 
-            this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
-            ctx.body = product;
+            return this.okStatus(ctx, OK_STATUS, product);
         } catch (error) {
-            this.badRequest(ctx, INTERNAL_SERVER_ERROR_STATUS, INTERNAL_SERVER_ERROR_MESSAGE);
+            return this.badRequest(ctx, ctx.status, error);
         }
     }
 
     // Update product by id
     public async updateProductById(ctx: IRouterContext) {
-        const id = +ctx.params.id;
-
-        if (isNaN(id) || id <= 0) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE)
-        }
-
-        const {name, description} = ctx.request.body as { name: string; description: string };
-
         try {
+
+            const id = Number(ctx.params.id);
+
+            if(!id){
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
+            }
+
+            const {name, description} = ctx.request.body as { name: string; description: string };
+
             const product = await this.productDataRepo.findOneBy({id});
 
             if (!product) {
-                return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE)
+                return this.badRequest(ctx, NOT_FOUND_STATUS, "Product Not Found.")
             }
 
             product.name = name;
@@ -140,32 +138,32 @@ export class ProductController extends BaseController {
 
             await this.productDataRepo.save(product);
 
-            this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE);
+            return this.okStatus(ctx, OK_STATUS, "Product Updated Successfully.");
 
         } catch (error) {
-            this.badRequest(ctx, INTERNAL_SERVER_ERROR_STATUS, INTERNAL_SERVER_ERROR_MESSAGE);
+            return this.badRequest(ctx, ctx.status, error);
         }
     }
 
     // Delete product by id
     public async deleteProductById(ctx: IRouterContext) {
-        const id = +ctx.params.id;
-
-        if (isNaN(id) || id <= 0) {
-            return this.badRequest(ctx, BAD_REQUEST_STATUS, BAD_REQUEST_MESSAGE)
-        }
-
         try {
+
+            const id = Number(ctx.params.id);
+
+            if(!id){
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
+            }
+
             const result = await this.productDataRepo.delete(id);
 
             if (result.affected === 0) {
-                return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE);
+                return this.badRequest(ctx, NOT_FOUND_STATUS, "Product Not Found");
             }
 
-            this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
-            ctx.body = result;
+            return this.okStatus(ctx, OK_STATUS, "Product Deleted Successfully.");
         } catch (error) {
-            this.badRequest(ctx, INTERNAL_SERVER_ERROR_STATUS, INTERNAL_SERVER_ERROR_MESSAGE);
+            return this.badRequest(ctx, ctx.status, error);
         }
     }
 }

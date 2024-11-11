@@ -1,7 +1,8 @@
-export type Options = {
-    [key: string]: string[]
-}
+export type Option = {
+    name: string;
+    value: string[];
+};
 
-export type  PriceMapping = {
-    [key: string]: number
-}
+export type Options = {
+    [key: string]: Option;
+};
