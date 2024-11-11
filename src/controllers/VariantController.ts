@@ -87,7 +87,7 @@ export class VariantController extends BaseController {
     public async createVariantForProduct(ctx: IRouterContext): Promise<void> {
         try {
 
-            const productId = Number(ctx.params.productId);
+            const productId: number = Number(ctx.params.productId);
 
             if(!productId) {
                 return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID);
