@@ -30,12 +30,8 @@ export class ProductController extends BaseController {
                 return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
             }
 
-            if (!description || description.trim() === "") {
-                return this.badRequest(ctx, BAD_REQUEST_STATUS, "Description must be provided.");
-            }
-
-            if (!name || name.trim() === "") {
-                return this.badRequest(ctx, BAD_REQUEST_STATUS, "Name must be provided.");
+            if (!description || description.trim() === "" || !name || name.trim() === "") {
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, "Name and Description must be provided.");
             }
 
             const client = await this.clientDataRepo.findOne({
@@ -71,13 +67,7 @@ export class ProductController extends BaseController {
                 return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
             }
 
-            const client = await this.clientDataRepo.findOne({
-                where: {
-                    id: id
-                }
-            });
-
-            const products = await this.productDataRepo.findOne({
+            const products = await this.productDataRepo.find({
                 where: {
                     client: {
                         id: id

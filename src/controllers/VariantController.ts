@@ -63,10 +63,11 @@ function generateVariants(options: Options, product: Product): Variant[] {
 function eachVariant(variantName : string[], product: Product, variants: Variant[]) : void{
     const variant = new Variant();
     variant.name = variantName[0];
+
     while(variantName.length > 0) {
         variantName.pop();
     }
-    console.log(variant.name);
+
     variant.price = Math.floor(Math.random() * 1000) + 1;
     variant.product = product;
     variants.push(variant);
@@ -98,8 +99,6 @@ export class VariantController extends BaseController {
                 }
             });
 
-
-
             const options = ctx.request.body as Options;
 
             if(!options){
@@ -124,6 +123,8 @@ export class VariantController extends BaseController {
                 if(option.value.length === 0){
                     return this.badRequest(ctx, BAD_REQUEST_STATUS, "Value should be provided.");
                 }
+
+                console.log(option.value.length);
 
                 for(let optionVal of option.value){
                     if(optionVal.trim() === ""){
@@ -153,16 +154,6 @@ export class VariantController extends BaseController {
 
             if(!id){
                 return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
-            }
-
-            const prod = await this.productDataRepo.findOne({
-                where: {
-                    id: id
-                }
-            });
-
-            if (!prod) {
-                return this.badRequest(ctx, NOT_FOUND_STATUS, "Product Not Found");
             }
 
             const variant = await this.variantDataRepo.find({
