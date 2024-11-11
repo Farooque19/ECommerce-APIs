@@ -18,7 +18,7 @@ export class ProductController extends BaseController {
     }
 
     // Create Product for a Client
-    public async createProductForClient(ctx: IRouterContext) {
+    public async createProductForClient(ctx: IRouterContext): Promise<void> {
         try {
             const id: number = Number(ctx.params.id);
             const {name, description} = ctx.request.body as {
@@ -58,7 +58,7 @@ export class ProductController extends BaseController {
     }
 
     // Get All Products for a Client
-    public async getProductForClient(ctx: IRouterContext) {
+    public async getProductForClient(ctx: IRouterContext): Promise<void> {
         try {
 
             const id: number = Number(ctx.params.id);
@@ -82,7 +82,7 @@ export class ProductController extends BaseController {
     }
 
     // Get Product by Id
-    async getProductById(ctx: IRouterContext) {
+    async getProductById(ctx: IRouterContext): Promise<void> {
         try {
 
             const id: number = Number(ctx.params.id);
@@ -106,7 +106,7 @@ export class ProductController extends BaseController {
     }
 
     // Update product by id
-    public async updateProductById(ctx: IRouterContext) {
+    public async updateProductById(ctx: IRouterContext): Promise<void> {
         try {
 
             const id: number = Number(ctx.params.id);
@@ -136,7 +136,7 @@ export class ProductController extends BaseController {
     }
 
     // Delete product by id
-    public async deleteProductById(ctx: IRouterContext) {
+    public async deleteProductById(ctx: IRouterContext): Promise<void> {
         try {
 
             const id: number = Number(ctx.params.id);

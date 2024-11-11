@@ -84,7 +84,7 @@ export class VariantController extends BaseController {
     }
 
     //Create Variant for a Product
-    public async createVariantForProduct(ctx: IRouterContext) {
+    public async createVariantForProduct(ctx: IRouterContext): Promise<void> {
         try {
 
             const productId = Number(ctx.params.productId);
@@ -148,7 +148,7 @@ export class VariantController extends BaseController {
     }
 
     //Get all Variants for a product
-    public async getVariantsForProduct(ctx: IRouterContext) {
+    public async getVariantsForProduct(ctx: IRouterContext): Promise<void> {
         try {
             const id: number = Number(ctx.params.productId);
 
@@ -171,7 +171,7 @@ export class VariantController extends BaseController {
     }
 
     //Get Variant by id
-    public async getVariantById(ctx: IRouterContext) {
+    public async getVariantById(ctx: IRouterContext): Promise<void> {
         try {
 
             const id: number = Number(ctx.params.id);
@@ -198,7 +198,7 @@ export class VariantController extends BaseController {
 
 
     //Update Variant by id
-    public async updateVariantById(ctx: IRouterContext) {
+    public async updateVariantById(ctx: IRouterContext): Promise<void> {
         try {
 
             const id: number = Number(ctx.params.id);

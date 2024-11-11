@@ -15,7 +15,7 @@ export class ClientController extends BaseController {
     }
 
     //Create new client
-    public async createClient(ctx: any) {
+    public async createClient(ctx: IRouterContext): Promise<void> {
         try {
 
             const {name, email} = ctx.request.body as { name: string; email: string };
@@ -36,14 +36,10 @@ export class ClientController extends BaseController {
 
 
     //Get all Clients
-    public async getClients(ctx: IRouterContext) {
+    public async getClients(ctx: IRouterContext): Promise<void> {
         try {
 
             const clients = await this.clientDataRepo.find();
-
-            if(!clients){
-                return this.badRequest(ctx, NOT_FOUND_STATUS, "Client Not Found.");
-            }
 
             return this.okStatus(ctx, OK_STATUS, clients);
         } catch (error) {
@@ -53,7 +49,7 @@ export class ClientController extends BaseController {
 
 
     //Get Clients by id
-    public async getClientById(ctx: IRouterContext) {
+    public async getClientById(ctx: IRouterContext): Promise<void> {
         try {
 
             const id: number = Number(ctx.params.id);
@@ -80,7 +76,7 @@ export class ClientController extends BaseController {
 
 
     //Update Client by id
-    public async updateClientById(ctx: IRouterContext) {
+    public async updateClientById(ctx: IRouterContext): Promise<void> {
         try {
 
             const id: number = Number(ctx.params.id);
@@ -113,7 +109,7 @@ export class ClientController extends BaseController {
 
 
     //Delete Client by id
-    public async deleteClientById(ctx: IRouterContext) {
+    public async deleteClientById(ctx: IRouterContext): Promise<void> {
         try {
 
             const id: number = Number(ctx.params.id);
