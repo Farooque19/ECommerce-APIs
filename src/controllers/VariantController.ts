@@ -124,8 +124,6 @@ export class VariantController extends BaseController {
                     return this.badRequest(ctx, BAD_REQUEST_STATUS, "Value should be provided.");
                 }
 
-                console.log(option.value.length);
-
                 for(let optionVal of option.value){
                     if(optionVal.trim() === ""){
                         return this.badRequest(ctx, BAD_REQUEST_STATUS, "Value cannot be empty or undefined.");
