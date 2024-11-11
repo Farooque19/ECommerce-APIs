@@ -20,7 +20,7 @@ export class ProductController extends BaseController {
     // Create Product for a Client
     public async createProductForClient(ctx: IRouterContext) {
         try {
-            const id = Number(ctx.params.id);
+            const id: number = Number(ctx.params.id);
             const {name, description} = ctx.request.body as {
                 name: string;
                 description: string;
@@ -65,7 +65,7 @@ export class ProductController extends BaseController {
     public async getProductForClient(ctx: IRouterContext) {
         try {
 
-            const id = Number(ctx.params.id);
+            const id: number = Number(ctx.params.id);
 
             if(!id){
                 return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
@@ -95,7 +95,7 @@ export class ProductController extends BaseController {
     async getProductById(ctx: IRouterContext) {
         try {
 
-            const id = Number(ctx.params.id);
+            const id: number = Number(ctx.params.id);
 
             if(!id){
                 return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
@@ -119,7 +119,7 @@ export class ProductController extends BaseController {
     public async updateProductById(ctx: IRouterContext) {
         try {
 
-            const id = Number(ctx.params.id);
+            const id: number = Number(ctx.params.id);
 
             if(!id){
                 return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
@@ -149,7 +149,7 @@ export class ProductController extends BaseController {
     public async deleteProductById(ctx: IRouterContext) {
         try {
 
-            const id = Number(ctx.params.id);
+            const id: number = Number(ctx.params.id);
 
             if(!id){
                 return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );

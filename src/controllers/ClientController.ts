@@ -35,7 +35,7 @@ export class ClientController extends BaseController {
     }
 
 
-    //Get all Clients f
+    //Get all Clients
     public async getClients(ctx: IRouterContext) {
         try {
 
@@ -56,7 +56,7 @@ export class ClientController extends BaseController {
     public async getClientById(ctx: IRouterContext) {
         try {
 
-            const id = Number(ctx.params.id);
+            const id: number = Number(ctx.params.id);
 
             if(!id){
                 return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
@@ -83,7 +83,7 @@ export class ClientController extends BaseController {
     public async updateClientById(ctx: IRouterContext) {
         try {
 
-            const id = Number(ctx.params.id);
+            const id: number = Number(ctx.params.id);
 
             if(!id){
                 return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
@@ -116,7 +116,7 @@ export class ClientController extends BaseController {
     public async deleteClientById(ctx: IRouterContext) {
         try {
 
-            const id = Number(ctx.params.id);
+            const id: number = Number(ctx.params.id);
 
             if(!id){
                 return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );

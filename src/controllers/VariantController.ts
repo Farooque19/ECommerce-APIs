@@ -98,9 +98,7 @@ export class VariantController extends BaseController {
                 }
             });
 
-            if (!product) {
-                return this.badRequest(ctx, BAD_REQUEST_STATUS, "Cannot create variant as product does not exists.");
-            }
+
 
             const options = ctx.request.body as Options;
 
@@ -133,6 +131,10 @@ export class VariantController extends BaseController {
                     }
                 }
 
+            }
+
+            if (!product) {
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, "Cannot create variant as product does not exists.");
             }
 
             const variant: Variant[] = generateVariants(options, product);
