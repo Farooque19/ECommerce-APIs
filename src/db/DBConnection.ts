@@ -23,11 +23,13 @@ export class DBConnection {
 
     async connect() {
         this.connection = await this.postgresDataSource.initialize();
+
         if (this.connection) {
             console.log("Database Connected");
             return this.postgresDataSource;
         } else {
             throw new Error("Database Connection failed");
         }
+
     }
 }

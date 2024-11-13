@@ -2,16 +2,20 @@ import {Client} from "../entities/Client";
 import {IRouterContext} from "koa-router";
 import {Product} from "../entities/Product";
 import {
-    BAD_REQUEST_STATUS, NOT_FOUND_STATUS, OK_STATUS, VALID_ID, INTERNAL_SERVER_ERROR_MESSAGE, INTERNAL_SERVER_ERROR_CODE
+    BAD_REQUEST_STATUS,
+    NOT_FOUND_STATUS,
+    OK_STATUS,
+    INTERNAL_SERVER_ERROR_MESSAGE,
+    INTERNAL_SERVER_ERROR_CODE
 } from "../utils/StatusCode";
 import {BaseController} from "./BaseController";
-import {Repository} from "typeorm";
+import {DataSource, Repository} from "typeorm";
 
 export class ProductController extends BaseController {
     protected productDataRepo: Repository<Product>;
     protected clientDataRepo: Repository<Client>;
 
-    constructor(connection: any) {
+    constructor(connection: DataSource) {
         super();
         this.productDataRepo = connection.getRepository(Product);
         this.clientDataRepo = connection.getRepository(Client);
@@ -44,10 +48,8 @@ export class ProductController extends BaseController {
             prod.name = name;
             prod.description = description;
             prod.client = client;
-
             await this.productDataRepo.save(prod);
             return this.okStatus(ctx, OK_STATUS, "Product Created Successfully.");
-
         } catch (error) {
             this.badRequest(ctx, INTERNAL_SERVER_ERROR_CODE, INTERNAL_SERVER_ERROR_MESSAGE);
         }
@@ -56,7 +58,6 @@ export class ProductController extends BaseController {
     // Get All Products for a Client
     public async getProductForClient(ctx: IRouterContext): Promise<void> {
         try {
-
             const id: number = Number(ctx.params.id);
 
             const products = await this.productDataRepo.find({
@@ -66,7 +67,6 @@ export class ProductController extends BaseController {
                     }
                 }
             });
-
             return this.okStatus(ctx, OK_STATUS, undefined, products);
         } catch (error) {
             return this.badRequest(ctx, INTERNAL_SERVER_ERROR_CODE, INTERNAL_SERVER_ERROR_MESSAGE);
@@ -76,9 +76,7 @@ export class ProductController extends BaseController {
     // Get Product by Id
     async getProductById(ctx: IRouterContext): Promise<void> {
         try {
-
             const id: number = Number(ctx.params.id);
-
             const product = await this.productDataRepo.findOne({
                 where: {id: id}
             });
@@ -96,7 +94,6 @@ export class ProductController extends BaseController {
     // Update product by id
     public async updateProductById(ctx: IRouterContext): Promise<void> {
         try {
-
             const id: number = Number(ctx.params.id);
             const {name, description} = ctx.request.body as { name: string; description: string };
 
@@ -110,7 +107,6 @@ export class ProductController extends BaseController {
             product.description = description;
             await this.productDataRepo.save(product);
             return this.okStatus(ctx, OK_STATUS, "Product Updated Successfully.");
-
         } catch (error) {
             return this.badRequest(ctx, ctx.status, error);
         }
@@ -119,12 +115,7 @@ export class ProductController extends BaseController {
     // Delete product by id
     public async deleteProductById(ctx: IRouterContext): Promise<void> {
         try {
-
             const id: number = Number(ctx.params.id);
-
-            if (!id) {
-                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID);
-            }
 
             const result = await this.productDataRepo.delete(id);
 

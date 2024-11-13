@@ -3,11 +3,14 @@ import {IRouterContext} from "koa-router";
 import {Product} from "../entities/Product";
 import {BaseController} from "./BaseController";
 import {
-    BAD_REQUEST_STATUS, CREATED_STATUS,
-    NOT_FOUND_STATUS, OK_STATUS,
-    INTERNAL_SERVER_ERROR_MESSAGE, INTERNAL_SERVER_ERROR_CODE
+    BAD_REQUEST_STATUS,
+    CREATED_STATUS,
+    NOT_FOUND_STATUS,
+    OK_STATUS,
+    INTERNAL_SERVER_ERROR_MESSAGE,
+    INTERNAL_SERVER_ERROR_CODE
 } from "../utils/StatusCode";
-import {Repository} from "typeorm";
+import {DataSource, Repository} from "typeorm";
 import {Options} from "../config/Type";
 
 function generateVariants(options: Options, product: Product): Variant[] {
@@ -59,7 +62,7 @@ export class VariantController extends BaseController {
     protected variantDataRepo: Repository<Variant>;
     protected productDataRepo: Repository<Product>;
 
-    constructor(connection: any) {
+    constructor(connection: DataSource) {
         super();
         this.variantDataRepo = connection.getRepository(Variant);
         this.productDataRepo = connection.getRepository(Product);
@@ -68,9 +71,7 @@ export class VariantController extends BaseController {
     //Create Variant for a Product
     public async createVariantForProduct(ctx: IRouterContext): Promise<void> {
         try {
-
             const productId: number = Number(ctx.params.productId);
-
             const options = ctx.request.body as Options;
 
             if (!options)
@@ -89,12 +90,9 @@ export class VariantController extends BaseController {
                     return this.badRequest(ctx, BAD_REQUEST_STATUS, "Name and Value both should be provided.");
 
                 for (let optionVal of option.value) {
-
                     if (!optionVal.trim())
                         return this.badRequest(ctx, BAD_REQUEST_STATUS, "Value cannot be empty or undefined.");
-
                 }
-
             }
 
             const product = await this.productDataRepo.findOne({
@@ -108,7 +106,6 @@ export class VariantController extends BaseController {
                 return this.badRequest(ctx, BAD_REQUEST_STATUS, "Cannot create variant as product does not exists.");
 
             const variant: Variant[] = generateVariants(options, product);
-
             await this.variantDataRepo.save(variant);
             return this.okStatus(ctx, CREATED_STATUS, "Variant Created");
         } catch (error) {
@@ -139,6 +136,7 @@ export class VariantController extends BaseController {
     public async getVariantById(ctx: IRouterContext): Promise<void> {
         try {
             const id: number = Number(ctx.params.id);
+
             const variant = await this.variantDataRepo.findOne({
                 where: {
                     id: id
@@ -158,7 +156,6 @@ export class VariantController extends BaseController {
     //Update Variant by id
     public async updateVariantById(ctx: IRouterContext): Promise<void> {
         try {
-
             const id: number = Number(ctx.params.id);
             const {name, price, inventory} = ctx.request.body as { name: string; price: number; inventory: number; };
 
@@ -176,7 +173,6 @@ export class VariantController extends BaseController {
                 price: price,
                 inventory: inventory
             });
-
             return this.okStatus(ctx, OK_STATUS, "Variant Updated Successfully.");
         } catch (error) {
             return this.badRequest(ctx, INTERNAL_SERVER_ERROR_CODE, INTERNAL_SERVER_ERROR_MESSAGE);
@@ -187,9 +183,7 @@ export class VariantController extends BaseController {
     //Delete Variant by id
     public async deleteVariantById(ctx: IRouterContext): Promise<void> {
         try {
-
             const id: number = Number(ctx.params.id);
-
             const result = await this.variantDataRepo.delete(id);
 
             if (result.affected === 0)

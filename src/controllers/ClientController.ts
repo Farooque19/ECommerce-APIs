@@ -9,12 +9,12 @@ import {
     INTERNAL_SERVER_ERROR_CODE
 } from "../utils/StatusCode";
 import {BaseController} from "./BaseController";
-import {Repository} from "typeorm";
+import {DataSource, Repository} from "typeorm";
 
 export class ClientController extends BaseController {
     protected clientDataRepo: Repository<Client>;
 
-    constructor(connection: any) {
+    constructor(connection: DataSource) {
         super();
         this.clientDataRepo = connection.getRepository(Client);
     }
@@ -72,7 +72,6 @@ export class ClientController extends BaseController {
     //Update Client by id
     public async updateClientById(ctx: IRouterContext): Promise<void> {
         try {
-
             const id: number = Number(ctx.params.id);
             const {name, email} = ctx.request.body as { name: string; email: string };
             const client = await this.clientDataRepo.findOne({
@@ -98,7 +97,6 @@ export class ClientController extends BaseController {
     //Delete Client by id
     public async deleteClientById(ctx: IRouterContext): Promise<void> {
         try {
-
             const id: number = Number(ctx.params.id);
             const deletedData = await this.clientDataRepo.delete({id});
 
