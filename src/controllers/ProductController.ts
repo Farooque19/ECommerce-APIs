@@ -2,7 +2,7 @@ import {Client} from "../entities/Client";
 import {IRouterContext} from "koa-router";
 import {Product} from "../entities/Product";
 import {
-    BAD_REQUEST_STATUS, NOT_FOUND_STATUS, OK_STATUS, VALID_ID
+    BAD_REQUEST_STATUS, NOT_FOUND_STATUS, OK_STATUS, VALID_ID, INTERNAL_SERVER_ERROR_MESSAGE, INTERNAL_SERVER_ERROR_CODE
 } from "../utils/StatusCode";
 import {BaseController} from "./BaseController";
 import {Repository} from "typeorm";
@@ -26,34 +26,30 @@ export class ProductController extends BaseController {
                 description: string;
             };
 
-            if(!id){
-                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
-            }
-
-            if (!description || description.trim() === "" || !name || name.trim() === "") {
+            if (!description || !name)
                 return this.badRequest(ctx, BAD_REQUEST_STATUS, "Name and Description must be provided.");
-            }
 
             const client = await this.clientDataRepo.findOne({
+                select: {id: true},
                 where: {
-                    id
+                    id: id
                 }
             });
 
-            if(!client){
+            if (!client) {
                 return this.badRequest(ctx, NOT_FOUND_STATUS, "Cannot create product for the given client ID(Client does not exist).");
             }
 
             const prod = new Product();
             prod.name = name;
             prod.description = description;
-            prod.client = client as Client;
+            prod.client = client;
 
             await this.productDataRepo.save(prod);
             return this.okStatus(ctx, OK_STATUS, "Product Created Successfully.");
 
         } catch (error) {
-            this.badRequest(ctx, ctx.status, "Client Not Found.");
+            this.badRequest(ctx, INTERNAL_SERVER_ERROR_CODE, INTERNAL_SERVER_ERROR_MESSAGE);
         }
     }
 
@@ -63,10 +59,6 @@ export class ProductController extends BaseController {
 
             const id: number = Number(ctx.params.id);
 
-            if(!id){
-                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
-            }
-
             const products = await this.productDataRepo.find({
                 where: {
                     client: {
@@ -75,9 +67,9 @@ export class ProductController extends BaseController {
                 }
             });
 
-            return this.okStatus(ctx, OK_STATUS, products);
+            return this.okStatus(ctx, OK_STATUS, undefined, products);
         } catch (error) {
-            return this.badRequest(ctx, ctx.status, error);
+            return this.badRequest(ctx, INTERNAL_SERVER_ERROR_CODE, INTERNAL_SERVER_ERROR_MESSAGE);
         }
     }
 
@@ -87,10 +79,6 @@ export class ProductController extends BaseController {
 
             const id: number = Number(ctx.params.id);
 
-            if(!id){
-                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
-            }
-
             const product = await this.productDataRepo.findOne({
                 where: {id: id}
             });
@@ -99,9 +87,9 @@ export class ProductController extends BaseController {
                 return this.badRequest(ctx, NOT_FOUND_STATUS, "Product not found.");
             }
 
-            return this.okStatus(ctx, OK_STATUS, product);
+            return this.okStatus(ctx, OK_STATUS, undefined, product);
         } catch (error) {
-            return this.badRequest(ctx, ctx.status, error);
+            return this.badRequest(ctx, INTERNAL_SERVER_ERROR_CODE, INTERNAL_SERVER_ERROR_MESSAGE);
         }
     }
 
@@ -110,11 +98,6 @@ export class ProductController extends BaseController {
         try {
 
             const id: number = Number(ctx.params.id);
-
-            if(!id){
-                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
-            }
-
             const {name, description} = ctx.request.body as { name: string; description: string };
 
             const product = await this.productDataRepo.findOneBy({id});
@@ -125,9 +108,7 @@ export class ProductController extends BaseController {
 
             product.name = name;
             product.description = description;
-
             await this.productDataRepo.save(product);
-
             return this.okStatus(ctx, OK_STATUS, "Product Updated Successfully.");
 
         } catch (error) {
@@ -141,8 +122,8 @@ export class ProductController extends BaseController {
 
             const id: number = Number(ctx.params.id);
 
-            if(!id){
-                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID );
+            if (!id) {
+                return this.badRequest(ctx, BAD_REQUEST_STATUS, VALID_ID);
             }
 
             const result = await this.productDataRepo.delete(id);
