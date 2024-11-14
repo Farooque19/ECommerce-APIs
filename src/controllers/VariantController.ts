@@ -15,9 +15,9 @@ import {Options} from "../config/Type";
 
 function generateVariants(options: Options, product: Product): Variant[] {
     let variants: Variant[] = [];
-    const option1 = options.option1?.value || [];
-    const option2 = options.option2?.value || [];
-    const option3 = options.option3?.value || [];
+    const option1: string[] = options.option1?.value || [];
+    const option2: string[] = options.option2?.value || [];
+    const option3: string[] = options.option3?.value || [];
     let optionsNames: string[] = [];
     let optionsName: string = "";
 
