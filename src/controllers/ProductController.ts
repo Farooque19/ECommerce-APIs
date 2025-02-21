@@ -132,13 +132,13 @@ export class ProductController extends BaseController{
         const id = +ctx.params.id;
 
         try {
-            const result = await this.productDataRepo.delete(id);
-
-            if (result.affected === 0) {
-                this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE);
-                return;
+            const productDataWithId: Product = await this.productDataRepo.findOneBy({ id });
+            
+            if (!productDataWithId) {
+                return this.badRequest(ctx, NOT_FOUND_STATUS, NOT_FOUND_MESSAGE);
             }
-
+            
+            const result = await this.productDataRepo.delete(id);
             this.okStatus(ctx, OK_STATUS, OK_STATUS_MESSAGE)
         } catch (error) {
             this.badRequest(ctx, INTERNAL_SERVER_ERROR_STATUS, INTERNAL_SERVER_ERROR_MESSAGE);
